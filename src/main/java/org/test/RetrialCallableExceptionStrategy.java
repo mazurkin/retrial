@@ -14,11 +14,11 @@ public interface RetrialCallableExceptionStrategy {
      * Handle the exception
      *
      * @param exception Exception that has been thrown
-     * @param trial The index of trial in the range: {@code 0 <= trial < total}
+     * @param trial The index of trial in the range: {@code 0 <= trial < total - 1}
      * @param total The total number of trials to be made
      *
      * @throws InterruptedException Exception on thread interruption
      */
-    void handleException(Exception exception, int trial, int total) throws InterruptedException;
+    void handleException(Exception exception, int trial, int total) throws Exception;
 
 }

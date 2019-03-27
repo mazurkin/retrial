@@ -42,17 +42,16 @@ public class RetrialCallableTest {
             callable.call();
             Assert.fail("Exception is expected");
         } catch (IOException e) {
-            LOGGER.debug("Expected exception", e);
+            Assert.assertEquals(IOException.class, e.getClass());
+            Assert.assertEquals(2, e.getSuppressed().length);
         }
 
         Mockito.verify(strategy, Mockito.times(1)).handleException(
                 Mockito.anyObject(), Mockito.eq(0), Mockito.eq(3));
         Mockito.verify(strategy, Mockito.times(1)).handleException(
                 Mockito.anyObject(), Mockito.eq(1), Mockito.eq(3));
-        Mockito.verify(strategy, Mockito.times(1)).handleException(
-                Mockito.anyObject(), Mockito.eq(2), Mockito.eq(3));
 
-        Mockito.verify(strategy, Mockito.times(3)).handleException(
+        Mockito.verify(strategy, Mockito.times(2)).handleException(
                 Mockito.anyObject(), Mockito.anyInt(), Mockito.anyInt());
     }
 

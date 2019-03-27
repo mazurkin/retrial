@@ -54,9 +54,9 @@ public class RetrialCallable<T> implements Callable<T> {
 
     @Override
     public T call() throws Exception {
-        Deque<Exception> exceptions = new ArrayDeque<>(trials);
+        Deque<Exception> exceptions = null;
 
-        for (int trial = 0; trial < trials; trial++) {
+        for (int trial = 0, left = trials - 1; trial < trials; trial++, left--) {
             try {
                 try {
                     return delegate.call();
@@ -66,28 +66,33 @@ public class RetrialCallable<T> implements Callable<T> {
                 } catch (Exception e) {
                     LOGGER.debug("Exception occurred on trial {} from {}", new Object[] { trial + 1, trials, e });
 
-                    exceptions.addLast(e);
+                    if (left > 0) {
+                        if (exceptions == null) {
+                            exceptions = new ArrayDeque<>(trials);
+                        }
 
-                    exceptionStrategy.handleException(e, trial, trials);
+                        exceptions.addLast(e);
+
+                        exceptionStrategy.handleException(e, trial, trials);
+                    } else {
+                        throw e;
+                    }
                 }
             } catch (Exception e) {
                 throw enrichException(e, exceptions);
             }
         }
 
-        if (!exceptions.isEmpty()) {
-            Exception last = exceptions.removeLast();
-            throw enrichException(last, exceptions);
-        } else {
-            throw new IllegalStateException("Should never happen. Blame the developer");
-        }
+        throw new IllegalStateException("Should never happen. Blame the developer");
     }
 
     private static Exception enrichException(Exception e, Deque<Exception> exceptions) {
-        while (!exceptions.isEmpty()) {
-            Exception suppressed = exceptions.removeFirst();
-            if (e != suppressed) {
-                e.addSuppressed(suppressed);
+        if (exceptions != null) {
+            while (!exceptions.isEmpty()) {
+                Exception suppressed = exceptions.removeFirst();
+                if (e != suppressed) {
+                    e.addSuppressed(suppressed);
+                }
             }
         }
 
